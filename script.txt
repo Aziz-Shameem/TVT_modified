@@ -1,6 +1,6 @@
-# svhn2mnist
+# medical
 
-python3 main.py --train_batch_size 128 --dataset svhn2mnist --name s2m  --source_list data/svhn2mnist/svhn_balanced.txt --target_list data/svhn2mnist/mnist_train.txt --test_list data/svhn2mnist/mnist_test.txt --num_classes 10 --model_type ViT-B_16 --pretrained_dir checkpoint/ViT-B_16.npz --num_steps 10000 --beta 1.0 --gamma 0.01 --use_im --theta 0.1
+python3 main.py --train_batch_size 128 --dataset medical --name med --source_list ~/Data_labels.txt --target_list ~/Data_labels_target.txt --test_list ~/Data_labels_test.txt --num_classes 6 --model_type wavemix --num_steps 10000 --beta 1.0 --gamma 0.01 --use_im --theta 0.1 --pretrained False
 
 
 # usps2mnist
