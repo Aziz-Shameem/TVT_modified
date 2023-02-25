@@ -456,19 +456,19 @@ class WaveFit(nn.Module):
     
     def forward(self, x_s, x_t=None, ad_net=None):
         embedding_output, posi_emb = self.embeddings(x_s)
-        print(f'shape of x_s : {x_s.shape}')
-        print(f'shape of embedding_output:{embedding_output.shape}')
+        # print(f'shape of x_s : {x_s.shape}')
+        # print(f'shape of embedding_output:{embedding_output.shape}')
         temp = self.attention_norm(embedding_output)
-        print(f'shape of temp : {temp.shape}')
+        # print(f'shape of temp : {temp.shape}')
         mixed_key_layer = self.key(temp)
         key_layer = self.transpose_for_scores(mixed_key_layer)
-        print(f'shape of mixed_key_layer:{mixed_key_layer.shape}, shape of key_layer:{key_layer.shape}')
+        # print(f'shape of mixed_key_layer:{mixed_key_layer.shape}, shape of key_layer:{key_layer.shape}')
         patch = key_layer
-        print(f'Shape of patch : {patch.shape}')
+        # print(f'Shape of patch : {patch.shape}')
         _, loss_ad_s = lossZoo.adv_local(patch[:,:,1:], ad_net, is_source=True)
 
         x_s = self.wave(x_s)
-        print(f'shape of x_s : {x_s.shape} -----------------------')
+        # print(f'shape of x_s : {x_s.shape} -----------------------')
         # return
         logits_s = self.head(x_s[:, 0])
         
@@ -483,7 +483,7 @@ class WaveFit(nn.Module):
 
             x_t = self.wave(x_t)
             logits_t = self.head(x_t[:, 0])
-            print(f'shape of x_t:{x_t.shape} ------------------------------')
+            # print(f'shape of x_t:{x_t.shape} ------------------------------')
             rec_t = self.decoder(x_t[:, 1:])
             xt_unfold = xt_unfold.permute(0, 2, 1).view_as(rec_t)
             loss_rec = self.criterion(rec_t, xt_unfold)
@@ -549,7 +549,7 @@ class WaveFit(nn.Module):
 
 
 def calc_coeff(iter_num, high=1.0, low=0.0, alpha=10.0, max_iter=10000.0):
-    return np.float(2.0 * (high - low) / (1.0 + np.exp(-alpha*iter_num / max_iter)) - (high - low) + low)
+    return np.float64(2.0 * (high - low) / (1.0 + np.exp(-alpha*iter_num / max_iter)) - (high - low) + low)
 
 
 def init_weights(m):
@@ -1094,14 +1094,14 @@ class WaveMix(nn.Module):
 
     def forward(self, img):
         x = self.conv(img)   
-        print("x = self.conv(img) ")
+        # print("x = self.conv(img) ")
             
         for attn in self.layers:
             x = attn(x) + x
-            print("x = attn(x) + x")
+            # print("x = attn(x) + x")
 
         x = self.final(x)
-        print("x = self.final(x)")
+        # print("x = self.final(x)")
 
         cls_tokens = repeat(self.cls_token, '() n d -> b n d', b = x.shape[0])
         x = torch.cat((cls_tokens, x), dim=1)
