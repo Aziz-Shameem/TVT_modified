@@ -73,8 +73,10 @@ def setup(args):
         if args.pretrained!="False" :
             model.load_state_dict(torch.load(args.pretrained_dir, map_location=args.device), strict=False)
         # model.load_from(np.load(args.pretrained_dir))
-        print("Model defined")
-        logger.info("Training parameters %s", args)
+        # print("Model defined")
+        if torch.cuda.is_available() :
+            model.cuda()
+        logger.info("Model on GPU \n Training parameters %s", args)
     else :
         config = CONFIGS[args.model_type]
         model = VisionTransformer(config, args.img_size, zero_head=True, 
@@ -175,7 +177,7 @@ def train(args, model):
         ImageList(open(args.source_list).readlines(), transform=transform_source, mode='RGB'),
         batch_size=args.train_batch_size, shuffle=False, num_workers=4)
         
-    print("Loading Datasets")
+    # print("Loading Datasets")
     
     target_loader = torch.utils.data.DataLoader(
         ImageListIndex(open(args.target_list).readlines(), transform=transform_target, mode='RGB'),
@@ -185,7 +187,7 @@ def train(args, model):
         ImageList(open(args.test_list).readlines(), transform=transform_test, mode='RGB'),
         batch_size=args.eval_batch_size, shuffle=False, num_workers=4)
     
-    print("Datasets Loaded")
+    # print("Datasets Loaded")
     
     config = CONFIGS[args.model_type]
     ad_net = AdversarialNetwork(config.hidden_size, config.hidden_size//4)
@@ -193,7 +195,7 @@ def train(args, model):
     ad_net_local = AdversarialNetwork(config.hidden_size//12, config.hidden_size//12)
     ad_net_local.to(args.device)
     
-    print("NNs defined")
+    # print("NNs defined")
     
     optimizer_ad = torch.optim.SGD(list(ad_net.parameters())+list(ad_net_local.parameters()),
                             lr=args.learning_rate/10, 
@@ -217,7 +219,7 @@ def train(args, model):
                                     momentum=0.9,
                                     weight_decay=args.weight_decay)
     
-    print("Optimizer Defined")
+    # print("Optimizer Defined")
     t_total = args.num_steps
     if args.decay_type == "cosine":
         scheduler = WarmupCosineSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
@@ -238,33 +240,33 @@ def train(args, model):
     len_source = len(source_loader)
     len_target = len(target_loader)   
 
-    print("Starting training...")
+    # print("Starting training...")
 
     for global_step in range(1, t_total):
-        print(f'Step : {global_step}')
+        # print(f'Step : {global_step}')
         model.train()
-        print("Model Train")
+        # print("Model Train")
         ad_net.train()
-        print("Ad Net train")
+        # print("Ad Net train")
         ad_net_local.train()
-        print("Ad Net Local train")
+        # print("Ad Net Local train")
 
         if (global_step-1) % (len_source-1) == 0:
             iter_source = iter(source_loader)    
         if (global_step-1) % (len_target-1) == 0:
             iter_target = iter(target_loader)
-        print("....")
-        data_source = iter_source.next()
-        print("data_source = iter_source.next()")
-        data_target = iter_target.next()
-        print("data_target = iter_target.next()")
+        # print("....")
+        data_source = next(iter_source)
+        # print("data_source = iter_source.next()")
+        data_target = next(iter_target)
+        # print("data_target = iter_target.next()")
 
         x_s, y_s = tuple(t.to(args.device) for t in data_source)
-        print("x_s, y_s = tuple(t.to(args.device) for t in data_source)")
+        # print("x_s, y_s = tuple(t.to(args.device) for t in data_source)")
         x_t, _, index_t = tuple(t.to(args.device) for t in data_target)
-        print("x_t, _, index_t = tuple(t.to(args.device) for t in data_target)")
+        # print("x_t, _, index_t = tuple(t.to(args.device) for t in data_target)")
         logits_s, logits_t, loss_ad_local, loss_rec, x_s, x_t = model(x_s, x_t, ad_net_local)
-        print("Model Fitted")
+        # print("Model Fitted")
 
         loss_fct = CrossEntropyLoss()
         loss_clc = loss_fct(logits_s.view(-1, args.num_classes), y_s.view(-1))
@@ -277,7 +279,7 @@ def train(args, model):
             loss += (args.theta * loss_im)
             
         loss.backward()
-        print("Backprop")
+        # print("Backprop")
 
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
         torch.nn.utils.clip_grad_norm_(ad_net.parameters(), args.max_grad_norm)
@@ -290,7 +292,7 @@ def train(args, model):
         optimizer_ad.step()
         optimizer_ad.zero_grad()
         scheduler_ad.step()
-        print("Optimizer stepped")
+        # print("Optimizer stepped")
         
         if args.local_rank in [-1, 0]:
             writer.add_scalar("train/loss", scalar_value=loss.item(), global_step=global_step)
