@@ -2,6 +2,8 @@
 
 python3 main.py --train_batch_size 128 --dataset medical --name med --source_list ~/Data_labels.txt --target_list ~/Data_labels_target.txt --test_list ~/Data_labels_test.txt --num_classes 6 --model_type wavemix --num_steps 10000 --beta 1.0 --gamma 0.01 --use_im --theta 0.1 --pretrained False
 
+python3 main.py --train_batch_size 128 --dataset svhn2mnist --name med --source_list data/data_labels.txt --target_list data/data_labels_target.txt --test_list data/data_labels_test.txt --num_classes 6 --model_type wavemix --num_steps 10000 --beta 1.0 --gamma 0.01 --use_im --theta 0.1 --pretrained False --eval_every 1000 --img_size 150
+
 
 # usps2mnist
 
